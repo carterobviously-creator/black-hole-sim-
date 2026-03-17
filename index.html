@@ -3,75 +3,172 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mini‑GW Web Song Studio — No Files Needed</title>
+<title>Mini‑GW — Web Song Studio (No AI Required)</title>
 <style>
-  :root{--bg:#071018;--accent:#2ee08a;--muted:#9fbf9f;--text:#e8fff0}
-  body{margin:0;font-family:Inter,Segoe UI,Consolas,monospace;background:var(--bg);color:var(--text);display:flex;align-items:flex-start;justify-content:center;padding:28px}
-  .wrap{width:980px;max-width:96%;background:#021018;border-radius:10px;padding:18px;border:1px solid rgba(46,224,138,0.06);box-shadow:0 10px 40px rgba(0,0,0,.6)}
-  h1{margin:0 0 6px;font-size:20px;color:var(--accent)}
-  p.lead{margin:0 0 14px;color:var(--muted);font-size:13px}
-  .row{display:flex;gap:12px;align-items:flex-start}
+  :root{
+    --bg:#071018; --panel:#2ee08a; --muted:#9fbf9f; --text:#e8fff0;
+    --card:#041820; --accent:#0fbf6f; --danger:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Segoe UI,Consolas,monospace;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+  .app{display:flex;flex:1;gap:18px;padding:22px;width:100%}
+  .sidebar{width:320px;background:linear-gradient(180deg,#021018 0,#031a1a 100%);border-radius:12px;padding:16px;border:1px solid rgba(46,224,138,0.06)}
+  .main{flex:1;background:linear-gradient(180deg,#001217 0,#021a1a 100%);border-radius:12px;padding:16px;border:1px solid rgba(46,224,138,0.04)}
+  h1{margin:0 0 8px;font-size:18px;color:var(--panel)}
+  .muted{color:var(--muted);font-size:13px;margin-bottom:12px}
+  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 6px}
+  input[type=text], select, textarea, input[type=number], .range{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:#041018;color:var(--text)}
+  textarea{min-height:80px;resize:vertical}
+  .row{display:flex;gap:8px}
   .col{flex:1}
-  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-  input[type=text], textarea, select{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:#041018;color:var(--text);box-sizing:border-box}
-  textarea{min-height:100px;resize:vertical}
-  button{background:var(--accent);color:#002;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
-  button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
-  #log{margin-top:12px;background:#001218;border:1px solid rgba(46,224,138,0.06);padding:10px;height:300px;overflow:auto;font-size:13px;color:#bfffd0}
-  .controls{display:flex;gap:8px;align-items:center;margin-top:10px}
+  button{background:var(--panel);color:#002;padding:10px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+  button.warn{background:var(--danger);color:#fff}
+  .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
+  #log{background:#001218;border:1px solid rgba(46,224,138,0.06);padding:10px;height:220px;overflow:auto;font-size:13px;color:#bfffd0;border-radius:8px}
+  .panel{background:linear-gradient(180deg,#021a1a,#011217);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+  .preset-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .preset{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.02);cursor:pointer;font-size:13px}
+  .preset.active{background:linear-gradient(90deg,var(--accent),#2ee08a);color:#002;font-weight:800}
   .small{font-size:12px;color:var(--muted)}
-  footer{margin-top:14px;color:var(--muted);font-size:12px}
-  .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);font-size:12px;color:var(--muted)}
+  .flex-between{display:flex;justify-content:space-between;align-items:center}
+  .file-row{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);font-size:12px;color:var(--muted)}
+  footer{margin-top:12px;color:var(--muted);font-size:12px}
+  .kbd{background:#001;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.02);font-size:12px}
+  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .instrument{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);text-align:center;cursor:pointer}
+  .instrument.active{background:linear-gradient(90deg,#0fbf6f,#2ee08a);color:#001;font-weight:800}
 </style>
 </head>
 <body>
-  <div class="wrap" role="main">
-    <h1>Mini‑GW Web Song Studio</h1>
-    <p class="lead">No external files required. This single static page generates music from your prompt using a deterministic in‑browser engine and synthesizes WAV audio you can download. It also includes a simple Grok‑like text reply generator (local, not a hosted model).</p>
+  <div class="app">
+    <aside class="sidebar">
+      <h1>Mini‑GW Studio</h1>
+      <div class="muted">Local, browser‑only music generator. No external AI required. Generate, preview, and download WAV.</div>
 
-    <div class="row">
-      <div class="col" style="flex:0 0 360px">
-        <label>Prompt / Song Idea</label>
-        <textarea id="prompt" placeholder="e.g. 'dark synthwave, 90 BPM, minor, arpeggiated lead, 32 bars'"></textarea>
+      <div class="panel">
+        <label>Prompt / Idea</label>
+        <textarea id="prompt" placeholder="Describe mood, instruments, tempo, e.g. 'dark synthwave, arpeggio lead, 90 BPM'"></textarea>
 
-        <div style="height:8px"></div>
-        <label>Style</label>
-        <select id="preset">
-          <option value="synthwave">Synthwave</option>
-          <option value="ambient">Ambient</option>
-          <option value="hiphop">Lo‑fi Hip Hop</option>
-          <option value="rock">Rock (simple)</option>
-          <option value="algorithmic">Algorithmic (neutral)</option>
+        <label>Preset</label>
+        <div class="preset-list" id="presetList">
+          <div class="preset active" data-preset="synthwave">Synthwave</div>
+          <div class="preset" data-preset="ambient">Ambient</div>
+          <div class="preset" data-preset="hiphop">Lo‑fi Hip Hop</div>
+          <div class="preset" data-preset="rock">Rock</div>
+          <div class="preset" data-preset="algorithmic">Algorithmic</div>
+        </div>
+
+        <label>Tempo (BPM)</label>
+        <input id="tempo" type="number" min="40" max="200" value="90" />
+
+        <label>Key</label>
+        <select id="key">
+          <option value="A">A</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option>
+        </select>
+
+        <label>Scale</label>
+        <select id="scale">
+          <option value="minor">Minor</option>
+          <option value="major">Major</option>
+          <option value="pentatonic">Pentatonic</option>
+        </select>
+
+        <label>Bars</label>
+        <input id="bars" type="number" min="1" max="64" value="16" />
+
+        <label>Density</label>
+        <select id="density">
+          <option value="sparse">Sparse</option>
+          <option value="medium" selected>Medium</option>
+          <option value="dense">Dense</option>
         </select>
 
         <div class="controls">
-          <button id="generateBtn">Generate Song</button>
-          <button id="stopBtn" class="secondary">Stop</button>
+          <button id="generateBtn">Generate</button>
+          <button id="playBtn" class="ghost">Play</button>
+          <button id="stopBtn" class="ghost">Stop</button>
         </div>
 
-        <div style="height:10px"></div>
-        <div class="small">Status: <span id="status">idle</span></div>
+        <div class="file-row">
+          <button id="downloadWav" class="ghost">Download WAV</button>
+          <button id="saveProject" class="ghost">Save</button>
+          <input id="loadProjectFile" type="file" accept=".json" style="display:none" />
+          <button id="loadProjectBtn" class="ghost">Load</button>
+        </div>
+
         <div style="height:8px"></div>
-        <div class="small">This page runs entirely in your browser. No server, no uploads, no external models required.</div>
+        <div class="small">Instruments</div>
+        <div class="grid" id="instruments">
+          <div class="instrument active" data-inst="lead">Lead</div>
+          <div class="instrument" data-inst="pad">Pad</div>
+          <div class="instrument" data-inst="bass">Bass</div>
+          <div class="instrument" data-inst="drums">Drums</div>
+        </div>
       </div>
 
-      <div class="col">
-        <label>Console / Output</label>
-        <div id="log" aria-live="polite"></div>
-        <div style="height:10px"></div>
-        <div class="small">When generation finishes, a WAV download link appears in the console. The page also prints a short Grok‑style text response describing the song.</div>
-      </div>
-    </div>
+      <footer>
+        <div class="small">Tip: use the prompt to steer mood. Presets set sensible defaults. Everything runs in your browser.</div>
+      </footer>
+    </aside>
 
-    <footer class="small">Drop this file into a GitHub Pages repo or open locally. Works offline in modern browsers (Chrome, Edge, Firefox).</footer>
+    <main class="main">
+      <div class="flex-between">
+        <div>
+          <div class="pill" id="status">Idle</div>
+        </div>
+        <div class="small">Mini‑GW • Local synth • No uploads</div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="panel">
+        <div class="flex-between">
+          <strong>Console</strong>
+          <div class="small">Preview & logs</div>
+        </div>
+        <div id="log"></div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="panel">
+        <strong>Quick Controls</strong>
+        <div style="height:8px"></div>
+        <div class="row">
+          <div class="col">
+            <label>Master Volume</label>
+            <input id="masterVol" type="range" min="0" max="1" step="0.01" value="0.9" />
+          </div>
+          <div class="col">
+            <label>Reverb (wet)</label>
+            <input id="reverb" type="range" min="0" max="1" step="0.01" value="0.12" />
+          </div>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="panel">
+        <strong>Project</strong>
+        <div style="height:8px"></div>
+        <div class="small">Export / import project JSON to keep ideas.</div>
+        <div style="height:8px"></div>
+        <div class="row">
+          <button id="exportJson" class="ghost">Export JSON</button>
+          <button id="clearLog" class="ghost">Clear Console</button>
+        </div>
+      </div>
+    </main>
   </div>
 
 <script>
-/* Mini-GW: single-file, no external files required
-   - Deterministic "AI-like" text reply (local templates)
-   - Deterministic note generator from prompt (seeded RNG)
-   - In-browser synthesis via OfflineAudioContext -> WAV download
-   - Stop is best-effort (no heavy background threads here)
+/* Mini-GW: improved menu + local-only generator
+   - No AI endpoint required
+   - Deterministic generator from prompt + presets
+   - In-browser synthesis (OfflineAudioContext) -> WAV download
+   - Save/load project JSON
 */
 
 /* Utilities */
@@ -82,21 +179,7 @@ function setStatus(s){ statusEl.textContent = s; }
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function downloadBlob(blob, filename){ const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); setTimeout(()=>URL.revokeObjectURL(url),60000); }
 
-/* Simple "Grok-like" local text generator (templates + prompt echo) */
-function grokReply(prompt, preset){
-  const templates = [
-    "I hear a %s pulse, a steady backbone that holds the space. Imagine %s layered over a %s groove.",
-    "Think %s: slow, wide, and cinematic. The lead should feel like %s while the rhythm keeps it grounded.",
-    "A compact idea: %s with a %s motif. Keep it tight, let the reverb do the rest.",
-    "Make it raw: %s, gritty textures, and a repeating %s phrase that anchors the track."
-  ];
-  const t = templates[Math.abs(hashString(prompt)) % templates.length];
-  const flavor = (preset==='synthwave') ? 'neon arpeggio' : (preset==='ambient') ? 'lush pad' : (preset==='hiphop') ? 'dusty loop' : (preset==='rock') ? 'driving riff' : 'modular motif';
-  const backbone = (preset==='hiphop') ? 'boom-bap kick' : (preset==='ambient') ? 'slow pulse' : 'steady four-on-the-floor';
-  return t.replace('%s', prompt || 'an open idea').replace('%s', flavor).replace('%s', backbone);
-}
-
-/* Seeded RNG helpers */
+/* Simple seeded RNG */
 function hashString(s){
   let h = 2166136261 >>> 0;
   for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
@@ -109,56 +192,118 @@ function makeRng(seed){
 
 /* Note utilities */
 const NOTE_FREQ = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
-const SCALE_MINOR = [0,2,3,5,7,8,10];
-const SCALE_MAJOR = [0,2,4,5,7,9,11];
+const SCALES = {
+  minor: [0,2,3,5,7,8,10],
+  major: [0,2,4,5,7,9,11],
+  pentatonic: [0,2,4,7,9]
+};
 
-/* Generate deterministic note sequence from prompt */
-function generateNotes(prompt, preset){
-  const seed = hashString((prompt||'') + '|' + preset);
+/* UI elements */
+const promptEl = document.getElementById('prompt');
+const presetList = document.getElementById('presetList');
+const tempoEl = document.getElementById('tempo');
+const keyEl = document.getElementById('key');
+const scaleEl = document.getElementById('scale');
+const barsEl = document.getElementById('bars');
+const densityEl = document.getElementById('density');
+const generateBtn = document.getElementById('generateBtn');
+const playBtn = document.getElementById('playBtn');
+const stopBtn = document.getElementById('stopBtn');
+const downloadWavBtn = document.getElementById('downloadWav');
+const saveProjectBtn = document.getElementById('saveProject');
+const loadProjectBtn = document.getElementById('loadProjectBtn');
+const loadProjectFile = document.getElementById('loadProjectFile');
+const exportJsonBtn = document.getElementById('exportJson');
+const clearLogBtn = document.getElementById('clearLog');
+const instrumentsEl = document.getElementById('instruments');
+const masterVolEl = document.getElementById('masterVol');
+const reverbEl = document.getElementById('reverb');
+
+/* State */
+let currentPreset = 'synthwave';
+let project = { prompt:'', preset:'synthwave', tempo:90, key:'A', scale:'minor', bars:16, density:'medium', instruments:['lead','pad','bass','drums'], notes:[], bpm:90 };
+let audioContext = null;
+let renderedBlob = null;
+let playingSource = null;
+
+/* Preset clicks */
+presetList.addEventListener('click', (e)=>{
+  const p = e.target.closest('.preset');
+  if(!p) return;
+  [...presetList.children].forEach(c=>c.classList.remove('active'));
+  p.classList.add('active');
+  currentPreset = p.dataset.preset;
+  document.getElementById('presetList').dataset.selected = currentPreset;
+  log('Preset: ' + currentPreset);
+});
+
+/* Instruments toggle */
+instrumentsEl.addEventListener('click', (e)=>{
+  const it = e.target.closest('.instrument');
+  if(!it) return;
+  it.classList.toggle('active');
+});
+
+/* Generate notes deterministically from prompt + settings */
+function generateNotesFromSettings(){
+  const prompt = (promptEl.value || currentPreset).trim();
+  const preset = currentPreset;
+  const tempo = parseInt(tempoEl.value || 90,10);
+  const key = keyEl.value || 'A';
+  const scale = scaleEl.value || 'minor';
+  const bars = parseInt(barsEl.value || 16,10);
+  const density = densityEl.value || 'medium';
+
+  const seed = hashString(prompt + '|' + preset + '|' + tempo + '|' + key + '|' + scale + '|' + bars + '|' + density);
   const rnd = makeRng(seed);
-  const bpm = (preset==='ambient')?60:(preset==='hiphop')?80:(preset==='rock')?100:90;
-  const bars = (preset==='ambient')?8:16;
   const totalBeats = bars * 4;
   const notes = [];
-  const root = 48 + Math.floor(rnd()*12); // C3-ish base
-  const scale = (preset==='synthwave' || preset==='ambient') ? SCALE_MINOR : SCALE_MAJOR;
+  const rootMidi = 57 + ['C','D','E','F','G','A','B'].indexOf(key[0] || 'A'); // rough mapping
+  const scaleSteps = SCALES[scale] || SCALES.minor;
+
+  const densityFactor = (density==='sparse')?0.45:(density==='dense')?0.85:0.65;
 
   for(let beat=0; beat<totalBeats; beat++){
-    // melody probability
-    if(rnd() < 0.6){
-      const degree = Math.floor(rnd()*scale.length);
-      const octave = Math.floor(rnd()*2); // 0 or 1
-      const midi = root + scale[degree] + octave*12;
+    if(rnd() < densityFactor){
+      const degree = Math.floor(rnd()*scaleSteps.length);
+      const octave = Math.floor(rnd()*2);
+      const midi = rootMidi + scaleSteps[degree] + octave*12;
       const dur = (rnd() < 0.6) ? 0.5 : 1.0;
       const vel = 0.4 + rnd()*0.6;
       notes.push({time: beat, dur: dur, note: midi, vel: vel, channel: 0});
     }
-    // bass
     if(rnd() < 0.18){
-      notes.push({time: beat, dur: 1.0, note: root-12, vel: 0.6, channel: 1});
+      notes.push({time: beat, dur: 1.0, note: rootMidi-12, vel: 0.6, channel: 1});
     }
-    // simple percussion (channel 9)
     if(preset==='hiphop' && rnd() < 0.35){
       notes.push({time: beat, dur: 0.25, note: 36, vel: 1.0, channel: 9});
     } else if(preset==='rock' && (beat%2===0)){
       notes.push({time: beat, dur: 0.25, note: 36, vel: 0.9, channel: 9});
     }
   }
-  return {notes, bpm};
+
+  project = { prompt, preset, tempo, key, scale, bars, density, notes, bpm: tempo };
+  return project;
 }
 
-/* In-browser synthesis: OfflineAudioContext -> WAV */
-async function synthesizeNotesToWav(sequence, bpm, opts={sampleRate:44100}){
-  const sr = opts.sampleRate;
-  const secondsPerBeat = 60 / bpm;
-  const last = sequence.reduce((m,n)=>Math.max(m, n.time + n.dur), 0);
+/* Synthesis: render notes to WAV using OfflineAudioContext */
+async function synthesizeProject(proj){
+  setStatus('rendering');
+  log('Rendering audio: ' + proj.prompt);
+  const sr = 44100;
+  const secondsPerBeat = 60 / proj.bpm;
+  const last = proj.notes.reduce((m,n)=>Math.max(m, n.time + n.dur), 0);
   const totalSeconds = last * secondsPerBeat + 1.0;
-  setStatus('synthesizing');
-  log(`Synthesizing ${totalSeconds.toFixed(2)}s @ ${sr}Hz (bpm ${bpm})...`);
+  log(`Duration: ${totalSeconds.toFixed(2)}s • BPM ${proj.bpm}`);
 
   const ctx = new OfflineAudioContext(2, Math.ceil(totalSeconds * sr), sr);
 
-  sequence.forEach(ev=>{
+  // Simple reverb (convolver) using generated impulse
+  const reverbWet = parseFloat(reverbEl.value || 0.12);
+  const convolver = ctx.createConvolver();
+  convolver.buffer = makeImpulseResponse(ctx, 2.5, 2.0);
+
+  proj.notes.forEach(ev=>{
     const start = ev.time * secondsPerBeat;
     const dur = Math.max(0.05, ev.dur * secondsPerBeat);
 
@@ -172,7 +317,7 @@ async function synthesizeNotesToWav(sequence, bpm, opts={sampleRate:44100}){
       src.buffer = noise;
       const gain = ctx.createGain();
       gain.gain.value = ev.vel;
-      src.connect(gain).connect(ctx.destination);
+      src.connect(gain).connect(convolver).connect(ctx.destination);
       src.start(start);
     } else {
       const freq = NOTE_FREQ(ev.note);
@@ -187,7 +332,7 @@ async function synthesizeNotesToWav(sequence, bpm, opts={sampleRate:44100}){
       gain.gain.setValueAtTime(0.0001, now);
       gain.gain.exponentialRampToValueAtTime(ev.vel, now + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.connect(filter).connect(gain).connect(convolver).connect(ctx.destination);
       osc.start(now);
       osc.stop(now + dur + 0.02);
     }
@@ -197,8 +342,24 @@ async function synthesizeNotesToWav(sequence, bpm, opts={sampleRate:44100}){
   setStatus('encoding');
   const wavBuffer = audioBufferToWav(rendered);
   const blob = new Blob([wavBuffer], {type:'audio/wav'});
+  renderedBlob = blob;
   setStatus('idle');
+  log('Render complete.');
   return blob;
+}
+
+/* Impulse response for reverb */
+function makeImpulseResponse(ctx, duration = 2.0, decay = 2.0) {
+  const sr = ctx.sampleRate;
+  const length = sr * duration;
+  const impulse = ctx.createBuffer(2, length, sr);
+  for (let i = 0; i < 2; i++) {
+    const channel = impulse.getChannelData(i);
+    for (let j = 0; j < length; j++) {
+      channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, decay);
+    }
+  }
+  return impulse;
 }
 
 /* WAV encoder (Float32 -> 16bit PCM WAV) */
@@ -221,37 +382,23 @@ function audioBufferToWav(buffer) {
   const arrayBuffer = new ArrayBuffer(bufferLength);
   const view = new DataView(arrayBuffer);
 
-  /* RIFF identifier */
   writeString(view, 0, 'RIFF');
-  /* file length */
   view.setUint32(4, 36 + interleaved.length * bytesPerSample, true);
-  /* RIFF type */
   writeString(view, 8, 'WAVE');
-  /* format chunk identifier */
   writeString(view, 12, 'fmt ');
-  /* format chunk length */
   view.setUint32(16, 16, true);
-  /* sample format (raw) */
   view.setUint16(20, format, true);
-  /* channel count */
   view.setUint16(22, numChannels, true);
-  /* sample rate */
   view.setUint32(24, sampleRate, true);
-  /* byte rate (sample rate * block align) */
   view.setUint32(28, sampleRate * blockAlign, true);
-  /* block align (channel count * bytes per sample) */
   view.setUint16(32, blockAlign, true);
-  /* bits per sample */
   view.setUint16(34, bitDepth, true);
-  /* data chunk identifier */
   writeString(view, 36, 'data');
-  /* data chunk length */
   view.setUint32(40, interleaved.length * bytesPerSample, true);
 
   floatTo16BitPCM(view, 44, interleaved);
   return view;
 }
-
 function interleave(inputL, inputR){
   const length = inputL.length + inputR.length;
   const result = new Float32Array(length);
@@ -263,62 +410,124 @@ function interleave(inputL, inputR){
   }
   return result;
 }
-
 function floatTo16BitPCM(output, offset, input){
   for (let i = 0; i < input.length; i++, offset += 2){
     let s = Math.max(-1, Math.min(1, input[i]));
     output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
   }
 }
-
 function writeString(view, offset, string){
   for (let i = 0; i < string.length; i++){
     view.setUint8(offset + i, string.charCodeAt(i));
   }
 }
 
-/* Main UI flow */
-let running = false;
-document.getElementById('generateBtn').addEventListener('click', async ()=>{
-  if(running){ log('Already running.'); return; }
-  running = true;
-  setStatus('running');
-  log('--- GENERATION START ---');
-  const prompt = document.getElementById('prompt').value.trim() || document.getElementById('preset').value;
-  const preset = document.getElementById('preset').value;
+/* Playback (simple) */
+async function playBlob(blob){
+  if(playingSource) { log('Already playing.'); return; }
+  const array = await blob.arrayBuffer();
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  audioContext = ctx;
+  const buf = await ctx.decodeAudioData(array);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const gain = ctx.createGain();
+  gain.gain.value = parseFloat(masterVolEl.value || 0.9);
+  src.connect(gain).connect(ctx.destination);
+  src.start();
+  playingSource = src;
+  src.onended = ()=>{ playingSource = null; log('Playback ended.'); };
+  log('Playing preview...');
+}
 
-  // Local Grok-like reply
-  const reply = grokReply(prompt, preset);
-  log('[GROK] ' + reply);
-
-  // Generate notes deterministically
-  log('Generating note sequence from prompt...');
-  const seq = generateNotes(prompt, preset);
-  log(`Notes: ${seq.notes.length} events, BPM ${seq.bpm}`);
-
-  // Synthesize to WAV
+/* UI actions */
+generateBtn.addEventListener('click', async ()=>{
+  if(renderedBlob) { renderedBlob = null; } // clear previous
+  setStatus('generating');
+  log('Generating notes from prompt...');
+  const proj = generateNotesFromSettings();
+  log(`Generated ${proj.notes.length} events • BPM ${proj.bpm}`);
   try {
-    const blob = await synthesizeNotesToWav(seq.notes, seq.bpm);
-    log('Synthesis complete. Preparing download...');
-    downloadBlob(blob, 'mini-gw-song.wav');
-    log('<span class="pill">Download ready: mini-gw-song.wav</span>');
+    const blob = await synthesizeProject(proj);
+    log('Render ready. Click Download WAV to save.');
+    downloadWavBtn.disabled = false;
   } catch(err){
-    log('Synthesis failed: ' + err.message);
+    log('Render error: ' + err.message);
   }
-
-  log('--- GENERATION END ---');
-  setStatus('idle');
-  running = false;
-});
-
-document.getElementById('stopBtn').addEventListener('click', ()=>{
-  // This simple build does not run cancellable audio threads.
-  // For heavy tasks, we'd keep a reference to the OfflineAudioContext and call suspend/close.
-  log('Stop requested (no-op in this build).');
   setStatus('idle');
 });
 
-/* End of script */
+downloadWavBtn.addEventListener('click', ()=>{
+  if(!renderedBlob){ log('No rendered audio yet. Click Generate first.'); return; }
+  downloadBlob(renderedBlob, 'mini-gw-song.wav');
+  log('Download started.');
+});
+
+playBtn.addEventListener('click', async ()=>{
+  if(!renderedBlob){ log('No rendered audio yet. Click Generate first.'); return; }
+  try { await playBlob(renderedBlob); } catch(e){ log('Playback error: ' + e.message); }
+});
+
+stopBtn.addEventListener('click', ()=>{
+  if(playingSource && audioContext){ try{ playingSource.stop(); playingSource = null; audioContext.close(); audioContext = null; log('Stopped.'); } catch(e){ log('Stop error: ' + e.message); } }
+  else log('Nothing is playing.');
+});
+
+/* Save / Load project JSON */
+saveProjectBtn.addEventListener('click', ()=>{
+  const proj = generateNotesFromSettings();
+  const data = JSON.stringify(proj, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  downloadBlob(blob, 'mini-gw-project.json');
+  log('Project exported.');
+});
+
+loadProjectBtn.addEventListener('click', ()=> loadProjectFile.click());
+loadProjectFile.addEventListener('change', (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=> {
+    try {
+      const j = JSON.parse(reader.result);
+      applyProjectToUI(j);
+      log('Project loaded.');
+    } catch(e){ log('Invalid project file.'); }
+  };
+  reader.readAsText(f);
+});
+
+exportJsonBtn.addEventListener('click', ()=>{
+  const proj = generateNotesFromSettings();
+  const data = JSON.stringify(proj);
+  const blob = new Blob([data], {type:'application/json'});
+  downloadBlob(blob, 'mini-gw-project-compact.json');
+  log('Compact JSON exported.');
+});
+
+clearLogBtn.addEventListener('click', ()=>{ logEl.innerHTML=''; });
+
+function applyProjectToUI(j){
+  promptEl.value = j.prompt || '';
+  currentPreset = j.preset || currentPreset;
+  [...presetList.children].forEach(c=>c.classList.toggle('active', c.dataset.preset===currentPreset));
+  tempoEl.value = j.tempo || 90;
+  keyEl.value = j.key || 'A';
+  scaleEl.value = j.scale || 'minor';
+  barsEl.value = j.bars || 16;
+  densityEl.value = j.density || 'medium';
+  project = j;
+  renderedBlob = null;
+}
+
+/* Init */
+(function init(){
+  setStatus('idle');
+  log('Mini‑GW ready. No external AI required.');
+  downloadWavBtn.disabled = true;
+  // instrument toggles default
+  [...instrumentsEl.children].forEach((c)=>{ c.classList.toggle('active', c.dataset.inst==='lead'); });
+})();
 </script>
 </body>
 </html>
