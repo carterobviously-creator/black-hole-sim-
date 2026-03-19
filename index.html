@@ -1,533 +1,711 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mini‑GW — Web Song Studio (No AI Required)</title>
-<style>
-  :root{
-    --bg:#071018; --panel:#2ee08a; --muted:#9fbf9f; --text:#e8fff0;
-    --card:#041820; --accent:#0fbf6f; --danger:#ff6b6b;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,Segoe UI,Consolas,monospace;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
-  .app{display:flex;flex:1;gap:18px;padding:22px;width:100%}
-  .sidebar{width:320px;background:linear-gradient(180deg,#021018 0,#031a1a 100%);border-radius:12px;padding:16px;border:1px solid rgba(46,224,138,0.06)}
-  .main{flex:1;background:linear-gradient(180deg,#001217 0,#021a1a 100%);border-radius:12px;padding:16px;border:1px solid rgba(46,224,138,0.04)}
-  h1{margin:0 0 8px;font-size:18px;color:var(--panel)}
-  .muted{color:var(--muted);font-size:13px;margin-bottom:12px}
-  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 6px}
-  input[type=text], select, textarea, input[type=number], .range{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:#041018;color:var(--text)}
-  textarea{min-height:80px;resize:vertical}
-  .row{display:flex;gap:8px}
-  .col{flex:1}
-  button{background:var(--panel);color:#002;padding:10px 12px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
-  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--text)}
-  button.warn{background:var(--danger);color:#fff}
-  .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
-  #log{background:#001218;border:1px solid rgba(46,224,138,0.06);padding:10px;height:220px;overflow:auto;font-size:13px;color:#bfffd0;border-radius:8px}
-  .panel{background:linear-gradient(180deg,#021a1a,#011217);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
-  .preset-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-  .preset{padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.02);cursor:pointer;font-size:13px}
-  .preset.active{background:linear-gradient(90deg,var(--accent),#2ee08a);color:#002;font-weight:800}
-  .small{font-size:12px;color:var(--muted)}
-  .flex-between{display:flex;justify-content:space-between;align-items:center}
-  .file-row{display:flex;gap:8px;align-items:center;margin-top:8px}
-  .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);font-size:12px;color:var(--muted)}
-  footer{margin-top:12px;color:var(--muted);font-size:12px}
-  .kbd{background:#001;padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.02);font-size:12px}
-  .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .instrument{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);text-align:center;cursor:pointer}
-  .instrument.active{background:linear-gradient(90deg,#0fbf6f,#2ee08a);color:#001;font-weight:800}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Hole Spaghettification Simulator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: radial-gradient(circle at center, #0a0a2a 0%, #000000 100%);
+            color: #e6e6e6;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        #title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(0, 219, 222, 0.5);
+        }
+        
+        #object-menu {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            width: 250px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+        
+        #object-menu h2 {
+            margin-bottom: 15px;
+            color: #00dbde;
+            font-size: 1.4rem;
+        }
+        
+        .object-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .object-item {
+            background: rgba(40, 40, 70, 0.7);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .object-item:hover {
+            background: rgba(60, 60, 100, 0.9);
+            transform: translateY(-3px);
+            border-color: #00dbde;
+        }
+        
+        .object-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            width: 250px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+        
+        #controls h2 {
+            margin-bottom: 15px;
+            color: #00dbde;
+            font-size: 1.4rem;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .slider-container input {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .slider-value {
+            width: 40px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        button {
+            background: linear-gradient(90deg, #00dbde, #fc00ff);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            width: 300px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+        
+        #info-panel h2 {
+            margin-bottom: 15px;
+            color: #00dbde;
+            font-size: 1.4rem;
+        }
+        
+        #info-content {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        #status {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 10px;
+            padding: 10px 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
+        }
+        
+        .accretion-disk {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, transparent 30%, #ff6b6b 70%, #ffd166 100%);
+            opacity: 0.7;
+            z-index: 1;
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <h1>Mini‑GW Studio</h1>
-      <div class="muted">Local, browser‑only music generator. No external AI required. Generate, preview, and download WAV.</div>
-
-      <div class="panel">
-        <label>Prompt / Idea</label>
-        <textarea id="prompt" placeholder="Describe mood, instruments, tempo, e.g. 'dark synthwave, arpeggio lead, 90 BPM'"></textarea>
-
-        <label>Preset</label>
-        <div class="preset-list" id="presetList">
-          <div class="preset active" data-preset="synthwave">Synthwave</div>
-          <div class="preset" data-preset="ambient">Ambient</div>
-          <div class="preset" data-preset="hiphop">Lo‑fi Hip Hop</div>
-          <div class="preset" data-preset="rock">Rock</div>
-          <div class="preset" data-preset="algorithmic">Algorithmic</div>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+        <div class="accretion-disk"></div>
+        
+        <div id="ui">
+            <h1 id="title">Black Hole Spaghettification Simulator</h1>
+            
+            <div id="object-menu">
+                <h2>Select Object</h2>
+                <div class="object-list">
+                    <div class="object-item" data-object="chair">
+                        <div class="object-icon">🪑</div>
+                        <div>Chair</div>
+                    </div>
+                    <div class="object-item" data-object="car">
+                        <div class="object-icon">🚗</div>
+                        <div>Car</div>
+                    </div>
+                    <div class="object-item" data-object="earth">
+                        <div class="object-icon">🌍</div>
+                        <div>Earth</div>
+                    </div>
+                    <div class="object-item" data-object="spaceship">
+                        <div class="object-icon">🚀</div>
+                        <div>Spaceship</div>
+                    </div>
+                    <div class="object-item" data-object="satellite">
+                        <div class="object-icon">🛰️</div>
+                        <div>Satellite</div>
+                    </div>
+                    <div class="object-item" data-object="astronaut">
+                        <div class="object-icon">👨‍🚀</div>
+                        <div>Astronaut</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="controls">
+                <h2>Simulation Controls</h2>
+                <div class="control-group">
+                    <label for="gravitySlider">Black Hole Gravity:</label>
+                    <div class="slider-container">
+                        <input type="range" id="gravitySlider" min="1" max="100" value="50">
+                        <span class="slider-value" id="gravityValue">50</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="distanceSlider">Object Distance:</label>
+                    <div class="slider-container">
+                        <input type="range" id="distanceSlider" min="1" max="100" value="50">
+                        <span class="slider-value" id="distanceValue">50</span>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="speedSlider">Simulation Speed:</label>
+                    <div class="slider-container">
+                        <input type="range" id="speedSlider" min="1" max="100" value="50">
+                        <span class="slider-value" id="speedValue">50</span>
+                    </div>
+                </div>
+                <button id="resetButton">Reset Simulation</button>
+            </div>
+            
+            <div id="info-panel">
+                <h2>About Spaghettification</h2>
+                <div id="info-content">
+                    <p>Spaghettification is the vertical stretching and horizontal compression of objects into long, thin shapes in a very strong gravitational field.</p>
+                    <p>This occurs because the gravitational pull on the end of an object closer to the black hole is much stronger than the pull on the other end.</p>
+                    <p>In this simulation, you can watch how different objects would be stretched as they approach a black hole's event horizon.</p>
+                </div>
+            </div>
+            
+            <div id="status">
+                Status: <span id="statusText">Select an object to begin simulation</span>
+            </div>
         </div>
+    </div>
 
-        <label>Tempo (BPM)</label>
-        <input id="tempo" type="number" min="40" max="200" value="90" />
-
-        <label>Key</label>
-        <select id="key">
-          <option value="A">A</option><option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option><option value="G">G</option>
-        </select>
-
-        <label>Scale</label>
-        <select id="scale">
-          <option value="minor">Minor</option>
-          <option value="major">Major</option>
-          <option value="pentatonic">Pentatonic</option>
-        </select>
-
-        <label>Bars</label>
-        <input id="bars" type="number" min="1" max="64" value="16" />
-
-        <label>Density</label>
-        <select id="density">
-          <option value="sparse">Sparse</option>
-          <option value="medium" selected>Medium</option>
-          <option value="dense">Dense</option>
-        </select>
-
-        <div class="controls">
-          <button id="generateBtn">Generate</button>
-          <button id="playBtn" class="ghost">Play</button>
-          <button id="stopBtn" class="ghost">Stop</button>
-        </div>
-
-        <div class="file-row">
-          <button id="downloadWav" class="ghost">Download WAV</button>
-          <button id="saveProject" class="ghost">Save</button>
-          <input id="loadProjectFile" type="file" accept=".json" style="display:none" />
-          <button id="loadProjectBtn" class="ghost">Load</button>
-        </div>
-
-        <div style="height:8px"></div>
-        <div class="small">Instruments</div>
-        <div class="grid" id="instruments">
-          <div class="instrument active" data-inst="lead">Lead</div>
-          <div class="instrument" data-inst="pad">Pad</div>
-          <div class="instrument" data-inst="bass">Bass</div>
-          <div class="instrument" data-inst="drums">Drums</div>
-        </div>
-      </div>
-
-      <footer>
-        <div class="small">Tip: use the prompt to steer mood. Presets set sensible defaults. Everything runs in your browser.</div>
-      </footer>
-    </aside>
-
-    <main class="main">
-      <div class="flex-between">
-        <div>
-          <div class="pill" id="status">Idle</div>
-        </div>
-        <div class="small">Mini‑GW • Local synth • No uploads</div>
-      </div>
-
-      <div style="height:12px"></div>
-
-      <div class="panel">
-        <div class="flex-between">
-          <strong>Console</strong>
-          <div class="small">Preview & logs</div>
-        </div>
-        <div id="log"></div>
-      </div>
-
-      <div style="height:12px"></div>
-
-      <div class="panel">
-        <strong>Quick Controls</strong>
-        <div style="height:8px"></div>
-        <div class="row">
-          <div class="col">
-            <label>Master Volume</label>
-            <input id="masterVol" type="range" min="0" max="1" step="0.01" value="0.9" />
-          </div>
-          <div class="col">
-            <label>Reverb (wet)</label>
-            <input id="reverb" type="range" min="0" max="1" step="0.01" value="0.12" />
-          </div>
-        </div>
-      </div>
-
-      <div style="height:12px"></div>
-
-      <div class="panel">
-        <strong>Project</strong>
-        <div style="height:8px"></div>
-        <div class="small">Export / import project JSON to keep ideas.</div>
-        <div style="height:8px"></div>
-        <div class="row">
-          <button id="exportJson" class="ghost">Export JSON</button>
-          <button id="clearLog" class="ghost">Clear Console</button>
-        </div>
-      </div>
-    </main>
-  </div>
-
-<script>
-/* Mini-GW: improved menu + local-only generator
-   - No AI endpoint required
-   - Deterministic generator from prompt + presets
-   - In-browser synthesis (OfflineAudioContext) -> WAV download
-   - Save/load project JSON
-*/
-
-/* Utilities */
-const logEl = document.getElementById('log');
-const statusEl = document.getElementById('status');
-function log(msg){ logEl.innerHTML += escapeHtml(msg) + '<br>'; logEl.scrollTop = logEl.scrollHeight; }
-function setStatus(s){ statusEl.textContent = s; }
-function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function downloadBlob(blob, filename){ const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); setTimeout(()=>URL.revokeObjectURL(url),60000); }
-
-/* Simple seeded RNG */
-function hashString(s){
-  let h = 2166136261 >>> 0;
-  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-  return h >>> 0;
-}
-function makeRng(seed){
-  let s = seed >>> 0;
-  return function(){ s = (Math.imul(1664525, s) + 1013904223) >>> 0; return s / 4294967296; };
-}
-
-/* Note utilities */
-const NOTE_FREQ = (midi) => 440 * Math.pow(2, (midi - 69) / 12);
-const SCALES = {
-  minor: [0,2,3,5,7,8,10],
-  major: [0,2,4,5,7,9,11],
-  pentatonic: [0,2,4,7,9]
-};
-
-/* UI elements */
-const promptEl = document.getElementById('prompt');
-const presetList = document.getElementById('presetList');
-const tempoEl = document.getElementById('tempo');
-const keyEl = document.getElementById('key');
-const scaleEl = document.getElementById('scale');
-const barsEl = document.getElementById('bars');
-const densityEl = document.getElementById('density');
-const generateBtn = document.getElementById('generateBtn');
-const playBtn = document.getElementById('playBtn');
-const stopBtn = document.getElementById('stopBtn');
-const downloadWavBtn = document.getElementById('downloadWav');
-const saveProjectBtn = document.getElementById('saveProject');
-const loadProjectBtn = document.getElementById('loadProjectBtn');
-const loadProjectFile = document.getElementById('loadProjectFile');
-const exportJsonBtn = document.getElementById('exportJson');
-const clearLogBtn = document.getElementById('clearLog');
-const instrumentsEl = document.getElementById('instruments');
-const masterVolEl = document.getElementById('masterVol');
-const reverbEl = document.getElementById('reverb');
-
-/* State */
-let currentPreset = 'synthwave';
-let project = { prompt:'', preset:'synthwave', tempo:90, key:'A', scale:'minor', bars:16, density:'medium', instruments:['lead','pad','bass','drums'], notes:[], bpm:90 };
-let audioContext = null;
-let renderedBlob = null;
-let playingSource = null;
-
-/* Preset clicks */
-presetList.addEventListener('click', (e)=>{
-  const p = e.target.closest('.preset');
-  if(!p) return;
-  [...presetList.children].forEach(c=>c.classList.remove('active'));
-  p.classList.add('active');
-  currentPreset = p.dataset.preset;
-  document.getElementById('presetList').dataset.selected = currentPreset;
-  log('Preset: ' + currentPreset);
-});
-
-/* Instruments toggle */
-instrumentsEl.addEventListener('click', (e)=>{
-  const it = e.target.closest('.instrument');
-  if(!it) return;
-  it.classList.toggle('active');
-});
-
-/* Generate notes deterministically from prompt + settings */
-function generateNotesFromSettings(){
-  const prompt = (promptEl.value || currentPreset).trim();
-  const preset = currentPreset;
-  const tempo = parseInt(tempoEl.value || 90,10);
-  const key = keyEl.value || 'A';
-  const scale = scaleEl.value || 'minor';
-  const bars = parseInt(barsEl.value || 16,10);
-  const density = densityEl.value || 'medium';
-
-  const seed = hashString(prompt + '|' + preset + '|' + tempo + '|' + key + '|' + scale + '|' + bars + '|' + density);
-  const rnd = makeRng(seed);
-  const totalBeats = bars * 4;
-  const notes = [];
-  const rootMidi = 57 + ['C','D','E','F','G','A','B'].indexOf(key[0] || 'A'); // rough mapping
-  const scaleSteps = SCALES[scale] || SCALES.minor;
-
-  const densityFactor = (density==='sparse')?0.45:(density==='dense')?0.85:0.65;
-
-  for(let beat=0; beat<totalBeats; beat++){
-    if(rnd() < densityFactor){
-      const degree = Math.floor(rnd()*scaleSteps.length);
-      const octave = Math.floor(rnd()*2);
-      const midi = rootMidi + scaleSteps[degree] + octave*12;
-      const dur = (rnd() < 0.6) ? 0.5 : 1.0;
-      const vel = 0.4 + rnd()*0.6;
-      notes.push({time: beat, dur: dur, note: midi, vel: vel, channel: 0});
-    }
-    if(rnd() < 0.18){
-      notes.push({time: beat, dur: 1.0, note: rootMidi-12, vel: 0.6, channel: 1});
-    }
-    if(preset==='hiphop' && rnd() < 0.35){
-      notes.push({time: beat, dur: 0.25, note: 36, vel: 1.0, channel: 9});
-    } else if(preset==='rock' && (beat%2===0)){
-      notes.push({time: beat, dur: 0.25, note: 36, vel: 0.9, channel: 9});
-    }
-  }
-
-  project = { prompt, preset, tempo, key, scale, bars, density, notes, bpm: tempo };
-  return project;
-}
-
-/* Synthesis: render notes to WAV using OfflineAudioContext */
-async function synthesizeProject(proj){
-  setStatus('rendering');
-  log('Rendering audio: ' + proj.prompt);
-  const sr = 44100;
-  const secondsPerBeat = 60 / proj.bpm;
-  const last = proj.notes.reduce((m,n)=>Math.max(m, n.time + n.dur), 0);
-  const totalSeconds = last * secondsPerBeat + 1.0;
-  log(`Duration: ${totalSeconds.toFixed(2)}s • BPM ${proj.bpm}`);
-
-  const ctx = new OfflineAudioContext(2, Math.ceil(totalSeconds * sr), sr);
-
-  // Simple reverb (convolver) using generated impulse
-  const reverbWet = parseFloat(reverbEl.value || 0.12);
-  const convolver = ctx.createConvolver();
-  convolver.buffer = makeImpulseResponse(ctx, 2.5, 2.0);
-
-  proj.notes.forEach(ev=>{
-    const start = ev.time * secondsPerBeat;
-    const dur = Math.max(0.05, ev.dur * secondsPerBeat);
-
-    if(ev.channel === 9){
-      // drum: short noise burst
-      const bufferSize = Math.floor(sr * 0.18);
-      const noise = ctx.createBuffer(1, bufferSize, sr);
-      const data = noise.getChannelData(0);
-      for(let i=0;i<bufferSize;i++) data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
-      const src = ctx.createBufferSource();
-      src.buffer = noise;
-      const gain = ctx.createGain();
-      gain.gain.value = ev.vel;
-      src.connect(gain).connect(convolver).connect(ctx.destination);
-      src.start(start);
-    } else {
-      const freq = NOTE_FREQ(ev.note);
-      const osc = ctx.createOscillator();
-      osc.type = (ev.channel===1)?'square':'sawtooth';
-      osc.frequency.value = freq;
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = (ev.channel===1)?800:2000;
-      const gain = ctx.createGain();
-      const now = start;
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(ev.vel, now + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      osc.connect(filter).connect(gain).connect(convolver).connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + dur + 0.02);
-    }
-  });
-
-  const rendered = await ctx.startRendering();
-  setStatus('encoding');
-  const wavBuffer = audioBufferToWav(rendered);
-  const blob = new Blob([wavBuffer], {type:'audio/wav'});
-  renderedBlob = blob;
-  setStatus('idle');
-  log('Render complete.');
-  return blob;
-}
-
-/* Impulse response for reverb */
-function makeImpulseResponse(ctx, duration = 2.0, decay = 2.0) {
-  const sr = ctx.sampleRate;
-  const length = sr * duration;
-  const impulse = ctx.createBuffer(2, length, sr);
-  for (let i = 0; i < 2; i++) {
-    const channel = impulse.getChannelData(i);
-    for (let j = 0; j < length; j++) {
-      channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, decay);
-    }
-  }
-  return impulse;
-}
-
-/* WAV encoder (Float32 -> 16bit PCM WAV) */
-function audioBufferToWav(buffer) {
-  const numChannels = buffer.numberOfChannels;
-  const sampleRate = buffer.sampleRate;
-  const format = 1; // PCM
-  const bitDepth = 16;
-
-  let interleaved;
-  if (numChannels === 2) {
-    interleaved = interleave(buffer.getChannelData(0), buffer.getChannelData(1));
-  } else {
-    interleaved = buffer.getChannelData(0);
-  }
-
-  const bytesPerSample = bitDepth / 8;
-  const blockAlign = numChannels * bytesPerSample;
-  const bufferLength = 44 + interleaved.length * bytesPerSample;
-  const arrayBuffer = new ArrayBuffer(bufferLength);
-  const view = new DataView(arrayBuffer);
-
-  writeString(view, 0, 'RIFF');
-  view.setUint32(4, 36 + interleaved.length * bytesPerSample, true);
-  writeString(view, 8, 'WAVE');
-  writeString(view, 12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, format, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * blockAlign, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, bitDepth, true);
-  writeString(view, 36, 'data');
-  view.setUint32(40, interleaved.length * bytesPerSample, true);
-
-  floatTo16BitPCM(view, 44, interleaved);
-  return view;
-}
-function interleave(inputL, inputR){
-  const length = inputL.length + inputR.length;
-  const result = new Float32Array(length);
-  let index = 0, inputIndex = 0;
-  while (index < length){
-    result[index++] = inputL[inputIndex];
-    result[index++] = inputR[inputIndex];
-    inputIndex++;
-  }
-  return result;
-}
-function floatTo16BitPCM(output, offset, input){
-  for (let i = 0; i < input.length; i++, offset += 2){
-    let s = Math.max(-1, Math.min(1, input[i]));
-    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-  }
-}
-function writeString(view, offset, string){
-  for (let i = 0; i < string.length; i++){
-    view.setUint8(offset + i, string.charCodeAt(i));
-  }
-}
-
-/* Playback (simple) */
-async function playBlob(blob){
-  if(playingSource) { log('Already playing.'); return; }
-  const array = await blob.arrayBuffer();
-  const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  audioContext = ctx;
-  const buf = await ctx.decodeAudioData(array);
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  const gain = ctx.createGain();
-  gain.gain.value = parseFloat(masterVolEl.value || 0.9);
-  src.connect(gain).connect(ctx.destination);
-  src.start();
-  playingSource = src;
-  src.onended = ()=>{ playingSource = null; log('Playback ended.'); };
-  log('Playing preview...');
-}
-
-/* UI actions */
-generateBtn.addEventListener('click', async ()=>{
-  if(renderedBlob) { renderedBlob = null; } // clear previous
-  setStatus('generating');
-  log('Generating notes from prompt...');
-  const proj = generateNotesFromSettings();
-  log(`Generated ${proj.notes.length} events • BPM ${proj.bpm}`);
-  try {
-    const blob = await synthesizeProject(proj);
-    log('Render ready. Click Download WAV to save.');
-    downloadWavBtn.disabled = false;
-  } catch(err){
-    log('Render error: ' + err.message);
-  }
-  setStatus('idle');
-});
-
-downloadWavBtn.addEventListener('click', ()=>{
-  if(!renderedBlob){ log('No rendered audio yet. Click Generate first.'); return; }
-  downloadBlob(renderedBlob, 'mini-gw-song.wav');
-  log('Download started.');
-});
-
-playBtn.addEventListener('click', async ()=>{
-  if(!renderedBlob){ log('No rendered audio yet. Click Generate first.'); return; }
-  try { await playBlob(renderedBlob); } catch(e){ log('Playback error: ' + e.message); }
-});
-
-stopBtn.addEventListener('click', ()=>{
-  if(playingSource && audioContext){ try{ playingSource.stop(); playingSource = null; audioContext.close(); audioContext = null; log('Stopped.'); } catch(e){ log('Stop error: ' + e.message); } }
-  else log('Nothing is playing.');
-});
-
-/* Save / Load project JSON */
-saveProjectBtn.addEventListener('click', ()=>{
-  const proj = generateNotesFromSettings();
-  const data = JSON.stringify(proj, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  downloadBlob(blob, 'mini-gw-project.json');
-  log('Project exported.');
-});
-
-loadProjectBtn.addEventListener('click', ()=> loadProjectFile.click());
-loadProjectFile.addEventListener('change', (ev)=>{
-  const f = ev.target.files[0];
-  if(!f) return;
-  const reader = new FileReader();
-  reader.onload = ()=> {
-    try {
-      const j = JSON.parse(reader.result);
-      applyProjectToUI(j);
-      log('Project loaded.');
-    } catch(e){ log('Invalid project file.'); }
-  };
-  reader.readAsText(f);
-});
-
-exportJsonBtn.addEventListener('click', ()=>{
-  const proj = generateNotesFromSettings();
-  const data = JSON.stringify(proj);
-  const blob = new Blob([data], {type:'application/json'});
-  downloadBlob(blob, 'mini-gw-project-compact.json');
-  log('Compact JSON exported.');
-});
-
-clearLogBtn.addEventListener('click', ()=>{ logEl.innerHTML=''; });
-
-function applyProjectToUI(j){
-  promptEl.value = j.prompt || '';
-  currentPreset = j.preset || currentPreset;
-  [...presetList.children].forEach(c=>c.classList.toggle('active', c.dataset.preset===currentPreset));
-  tempoEl.value = j.tempo || 90;
-  keyEl.value = j.key || 'A';
-  scaleEl.value = j.scale || 'minor';
-  barsEl.value = j.bars || 16;
-  densityEl.value = j.density || 'medium';
-  project = j;
-  renderedBlob = null;
-}
-
-/* Init */
-(function init(){
-  setStatus('idle');
-  log('Mini‑GW ready. No external AI required.');
-  downloadWavBtn.disabled = true;
-  // instrument toggles default
-  [...instrumentsEl.children].forEach((c)=>{ c.classList.toggle('active', c.dataset.inst==='lead'); });
-})();
-</script>
+    <script>
+        // Three.js Black Hole Simulation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get canvas element
+            const canvas = document.getElementById('canvas');
+            const statusElement = document.getElementById('statusText');
+            
+            // Create Three.js scene
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000011);
+            
+            // Create camera
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+            
+            // Create renderer
+            const renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas,
+                antialias: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0x333333, 0.4);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 7);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+            
+            // Add a point light for the black hole glow
+            const blackHoleLight = new THREE.PointLight(0x4a00ff, 1, 100);
+            blackHoleLight.position.set(0, 0, 0);
+            scene.add(blackHoleLight);
+            
+            // Controls for orbiting around the scene
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Create black hole (event horizon)
+            const blackHoleGeometry = new THREE.SphereGeometry(1, 32, 32);
+            const blackHoleMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x000000,
+                transparent: true,
+                opacity: 0.9
+            });
+            const blackHole = new THREE.Mesh(blackHoleGeometry, blackHoleMaterial);
+            scene.add(blackHole);
+            
+            // Create accretion disk
+            const diskGeometry = new THREE.RingGeometry(1.5, 5, 64);
+            const diskMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xff6b6b,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.7
+            });
+            const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
+            accretionDisk.rotation.x = Math.PI / 2;
+            scene.add(accretionDisk);
+            
+            // Create gravitational lensing effect (distortion sphere)
+            const lensGeometry = new THREE.SphereGeometry(8, 32, 32);
+            const lensMaterial = new THREE.MeshBasicMaterial({
+                color: 0x000022,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.1
+            });
+            const lensingSphere = new THREE.Mesh(lensGeometry, lensMaterial);
+            scene.add(lensingSphere);
+            
+            // Object storage
+            let currentObject = null;
+            let objectGroup = new THREE.Group();
+            scene.add(objectGroup);
+            
+            // Simulation parameters
+            let gravityStrength = 50;
+            let objectDistance = 50;
+            let simulationSpeed = 50;
+            let isSimulating = false;
+            
+            // Object creation functions
+            function createChair() {
+                const group = new THREE.Group();
+                
+                // Chair seat
+                const seatGeometry = new THREE.BoxGeometry(1.5, 0.2, 1.5);
+                const seatMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+                const seat = new THREE.Mesh(seatGeometry, seatMaterial);
+                seat.position.y = 0.1;
+                group.add(seat);
+                
+                // Chair legs
+                const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1, 8);
+                const legMaterial = new THREE.MeshPhongMaterial({ color: 0x654321 });
+                
+                for (let i = 0; i < 4; i++) {
+                    const leg = new THREE.Mesh(legGeometry, legMaterial);
+                    const x = (i % 2 === 0) ? -0.6 : 0.6;
+                    const z = (i < 2) ? -0.6 : 0.6;
+                    leg.position.set(x, -0.5, z);
+                    group.add(leg);
+                }
+                
+                // Chair back
+                const backGeometry = new THREE.BoxGeometry(0.2, 1.5, 1.5);
+                const backMaterial = new THREE.MeshPhongMaterial({ color: 0x8B4513 });
+                const back = new THREE.Mesh(backGeometry, backMaterial);
+                back.position.set(-0.8, 0.85, 0);
+                group.add(back);
+                
+                return group;
+            }
+            
+            function createCar() {
+                const group = new THREE.Group();
+                
+                // Car body
+                const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.4;
+                group.add(body);
+                
+                // Car top
+                const topGeometry = new THREE.BoxGeometry(1.5, 0.6, 2);
+                const topMaterial = new THREE.MeshPhongMaterial({ color: 0xff3333 });
+                const top = new THREE.Mesh(topGeometry, topMaterial);
+                top.position.set(0, 1.1, -0.5);
+                group.add(top);
+                
+                // Wheels
+                const wheelGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
+                const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x222222 });
+                
+                for (let i = 0; i < 4; i++) {
+                    const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                    wheel.rotation.z = Math.PI / 2;
+                    
+                    const x = (i % 2 === 0) ? -0.8 : 0.8;
+                    const z = (i < 2) ? -1.2 : 1.2;
+                    wheel.position.set(x, 0.4, z);
+                    group.add(wheel);
+                }
+                
+                return group;
+            }
+            
+            function createEarth() {
+                const group = new THREE.Group();
+                
+                // Earth sphere
+                const earthGeometry = new THREE.SphereGeometry(1, 32, 32);
+                const earthMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x1E90FF,
+                    shininess: 30
+                });
+                const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+                group.add(earth);
+                
+                // Add some continents (simplified)
+                const continentGeometry = new THREE.SphereGeometry(1.02, 32, 32);
+                const continentMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x228B22,
+                    transparent: true,
+                    opacity: 0.7
+                });
+                const continents = new THREE.Mesh(continentGeometry, continentMaterial);
+                group.add(continents);
+                
+                return group;
+            }
+            
+            function createSpaceship() {
+                const group = new THREE.Group();
+                
+                // Main body
+                const bodyGeometry = new THREE.ConeGeometry(0.5, 2, 8);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.rotation.x = Math.PI;
+                group.add(body);
+                
+                // Wings
+                const wingGeometry = new THREE.BoxGeometry(2, 0.1, 0.5);
+                const wingMaterial = new THREE.MeshPhongMaterial({ color: 0x999999 });
+                
+                const leftWing = new THREE.Mesh(wingGeometry, wingMaterial);
+                leftWing.position.set(-1, 0, 0);
+                group.add(leftWing);
+                
+                const rightWing = new THREE.Mesh(wingGeometry, wingMaterial);
+                rightWing.position.set(1, 0, 0);
+                group.add(rightWing);
+                
+                // Engine glow
+                const engineGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+                const engineMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xff4500,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const engine = new THREE.Mesh(engineGeometry, engineMaterial);
+                engine.position.set(0, -1.2, 0);
+                group.add(engine);
+                
+                return group;
+            }
+            
+            function createSatellite() {
+                const group = new THREE.Group();
+                
+                // Main body
+                const bodyGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                group.add(body);
+                
+                // Solar panels
+                const panelGeometry = new THREE.BoxGeometry(2, 0.05, 1);
+                const panelMaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff });
+                
+                const leftPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+                leftPanel.position.set(-1.5, 0, 0);
+                group.add(leftPanel);
+                
+                const rightPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+                rightPanel.position.set(1.5, 0, 0);
+                group.add(rightPanel);
+                
+                // Antenna
+                const antennaGeometry = new THREE.CylinderGeometry(0.02, 0.02, 1, 8);
+                const antennaMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+                const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+                antenna.position.set(0, 0.9, 0);
+                group.add(antenna);
+                
+                return group;
+            }
+            
+            function createAstronaut() {
+                const group = new THREE.Group();
+                
+                // Helmet
+                const helmetGeometry = new THREE.SphereGeometry(0.4, 16, 16);
+                const helmetMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+                const helmet = new THREE.Mesh(helmetGeometry, helmetMaterial);
+                helmet.position.y = 0.8;
+                group.add(helmet);
+                
+                // Body
+                const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.8, 8);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0;
+                group.add(body);
+                
+                // Arms
+                const armGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 8);
+                const armMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+                
+                const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+                leftArm.position.set(-0.4, 0.3, 0);
+                leftArm.rotation.z = Math.PI / 6;
+                group.add(leftArm);
+                
+                const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+                rightArm.position.set(0.4, 0.3, 0);
+                rightArm.rotation.z = -Math.PI / 6;
+                group.add(rightArm);
+                
+                // Legs
+                const legGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.8, 8);
+                const legMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+                
+                const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+                leftLeg.position.set(-0.2, -0.8, 0);
+                group.add(leftLeg);
+                
+                const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+                rightLeg.position.set(0.2, -0.8, 0);
+                group.add(rightLeg);
+                
+                return group;
+            }
+            
+            // Object selection
+            document.querySelectorAll('.object-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const objectType = this.getAttribute('data-object');
+                    selectObject(objectType);
+                });
+            });
+            
+            function selectObject(type) {
+                // Remove current object
+                objectGroup.clear();
+                
+                // Create new object based on type
+                switch(type) {
+                    case 'chair':
+                        currentObject = createChair();
+                        break;
+                    case 'car':
+                        currentObject = createCar();
+                        break;
+                    case 'earth':
+                        currentObject = createEarth();
+                        break;
+                    case 'spaceship':
+                        currentObject = createSpaceship();
+                        break;
+                    case 'satellite':
+                        currentObject = createSatellite();
+                        break;
+                    case 'astronaut':
+                        currentObject = createAstronaut();
+                        break;
+                }
+                
+                // Position the object
+                const distance = 15 - (objectDistance / 100) * 14; // 1 to 15 units from black hole
+                currentObject.position.set(distance, 0, 0);
+                
+                // Add to scene
+                objectGroup.add(currentObject);
+                
+                // Update status
+                statusElement.textContent = `Simulating ${type} approaching black hole`;
+                isSimulating = true;
+            }
+            
+            // Control sliders
+            document.getElementById('gravitySlider').addEventListener('input', function() {
+                gravityStrength = parseInt(this.value);
+                document.getElementById('gravityValue').textContent = gravityStrength;
+            });
+            
+            document.getElementById('distanceSlider').addEventListener('input', function() {
+                objectDistance = parseInt(this.value);
+                document.getElementById('distanceValue').textContent = objectDistance;
+                
+                if (currentObject) {
+                    const distance = 15 - (objectDistance / 100) * 14;
+                    currentObject.position.x = distance;
+                }
+            });
+            
+            document.getElementById('speedSlider').addEventListener('input', function() {
+                simulationSpeed = parseInt(this.value);
+                document.getElementById('speedValue').textContent = simulationSpeed;
+            });
+            
+            // Reset button
+            document.getElementById('resetButton').addEventListener('click', function() {
+                if (currentObject) {
+                    const distance = 15 - (objectDistance / 100) * 14;
+                    currentObject.position.set(distance, 0, 0);
+                    currentObject.scale.set(1, 1, 1);
+                    currentObject.rotation.set(0, 0, 0);
+                }
+                statusElement.textContent = 'Simulation reset';
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Rotate accretion disk
+                accretionDisk.rotation.z += 0.01;
+                
+                // Simulate spaghettification if an object is present
+                if (currentObject && isSimulating) {
+                    const distanceToBlackHole = currentObject.position.length();
+                    
+                    // Calculate spaghettification effect based on distance and gravity
+                    const stretchFactor = (gravityStrength / 50) * (15 / distanceToBlackHole);
+                    const compressionFactor = 1 / stretchFactor;
+                    
+                    // Apply stretching and compression
+                    currentObject.scale.y = stretchFactor;
+                    currentObject.scale.x = compressionFactor;
+                    currentObject.scale.z = compressionFactor;
+                    
+                    // Rotate object due to tidal forces
+                    currentObject.rotation.z += 0.01 * (simulationSpeed / 50);
+                    
+                    // Move object toward black hole
+                    if (distanceToBlackHole > 1.5) {
+                        const moveSpeed = 0.05 * (simulationSpeed / 50);
+                        currentObject.position.x -= moveSpeed;
+                    }
+                }
+                
+                // Update controls
+                controls.update();
+                
+                // Render scene
+                renderer.render(scene, camera);
+            }
+            
+            // Start animation
+            animate();
+        });
+    </script>
 </body>
 </html>
