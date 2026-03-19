@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Black Hole Spaghettification Simulator</title>
+    <title>Realistic Black Hole Simulator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
     <style>
@@ -195,15 +195,15 @@
             pointer-events: auto;
         }
         
-        .accretion-disk {
+        .gravitational-lensing {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 400px;
-            height: 400px;
+            width: 200px;
+            height: 200px;
             border-radius: 50%;
-            background: radial-gradient(circle, transparent 30%, #ff6b6b 70%, #ffd166 100%);
+            background: radial-gradient(circle, transparent 30%, rgba(0, 0, 0, 0.8) 70%, black 100%);
             opacity: 0.7;
             z-index: 1;
             pointer-events: none;
@@ -213,10 +213,10 @@
 <body>
     <div id="container">
         <canvas id="canvas"></canvas>
-        <div class="accretion-disk"></div>
+        <div class="gravitational-lensing"></div>
         
         <div id="ui">
-            <h1 id="title">Black Hole Spaghettification Simulator</h1>
+            <h1 id="title">Realistic Black Hole Simulator</h1>
             
             <div id="object-menu">
                 <h2>Select Object</h2>
@@ -251,7 +251,7 @@
             <div id="controls">
                 <h2>Simulation Controls</h2>
                 <div class="control-group">
-                    <label for="gravitySlider">Black Hole Gravity:</label>
+                    <label for="gravitySlider">Black Hole Mass:</label>
                     <div class="slider-container">
                         <input type="range" id="gravitySlider" min="1" max="100" value="50">
                         <span class="slider-value" id="gravityValue">50</span>
@@ -275,11 +275,11 @@
             </div>
             
             <div id="info-panel">
-                <h2>About Spaghettification</h2>
+                <h2>About Black Holes</h2>
                 <div id="info-content">
-                    <p>Spaghettification is the vertical stretching and horizontal compression of objects into long, thin shapes in a very strong gravitational field.</p>
-                    <p>This occurs because the gravitational pull on the end of an object closer to the black hole is much stronger than the pull on the other end.</p>
-                    <p>In this simulation, you can watch how different objects would be stretched as they approach a black hole's event horizon.</p>
+                    <p>A black hole is a region of spacetime where gravity is so strong that nothing—no particles or even electromagnetic radiation such as light—can escape from it.</p>
+                    <p>Spaghettification is the vertical stretching and horizontal compression of objects into long, thin shapes due to extreme tidal forces.</p>
+                    <p>This simulation shows how different objects would be affected as they approach a black hole's event horizon.</p>
                 </div>
             </div>
             
@@ -302,7 +302,7 @@
             
             // Create camera
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 5, 10);
+            camera.position.set(0, 5, 15);
             
             // Create renderer
             const renderer = new THREE.WebGLRenderer({ 
@@ -323,7 +323,7 @@
             scene.add(directionalLight);
             
             // Add a point light for the black hole glow
-            const blackHoleLight = new THREE.PointLight(0x4a00ff, 1, 100);
+            const blackHoleLight = new THREE.PointLight(0x4a00ff, 2, 100);
             blackHoleLight.position.set(0, 0, 0);
             scene.add(blackHoleLight);
             
@@ -332,38 +332,124 @@
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             
-            // Create black hole (event horizon)
-            const blackHoleGeometry = new THREE.SphereGeometry(1, 32, 32);
+            // Create black hole (event horizon) - more realistic
+            const blackHoleGeometry = new THREE.SphereGeometry(1.5, 64, 64);
             const blackHoleMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0x000000,
-                transparent: true,
-                opacity: 0.9
+                color: 0x000000
             });
             const blackHole = new THREE.Mesh(blackHoleGeometry, blackHoleMaterial);
             scene.add(blackHole);
             
-            // Create accretion disk
-            const diskGeometry = new THREE.RingGeometry(1.5, 5, 64);
-            const diskMaterial = new THREE.MeshBasicMaterial({ 
-                color: 0xff6b6b,
-                side: THREE.DoubleSide,
+            // Create photon sphere (gravitational lensing effect)
+            const photonSphereGeometry = new THREE.SphereGeometry(2.5, 64, 64);
+            const photonSphereMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0.0 }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float time;
+                    varying vec2 vUv;
+                    void main() {
+                        vec2 center = vec2(0.5, 0.5);
+                        float dist = distance(vUv, center);
+                        float intensity = sin(dist * 20.0 - time * 5.0) * 0.5 + 0.5;
+                        gl_FragColor = vec4(0.3, 0.1, 0.8, intensity * 0.3);
+                    }
+                `,
                 transparent: true,
-                opacity: 0.7
+                side: THREE.BackSide
+            });
+            const photonSphere = new THREE.Mesh(photonSphereGeometry, photonSphereMaterial);
+            scene.add(photonSphere);
+            
+            // Create realistic accretion disk
+            const diskGeometry = new THREE.RingGeometry(2, 8, 128);
+            const diskMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    time: { value: 0.0 },
+                    innerRadius: { value: 2.0 },
+                    outerRadius: { value: 8.0 }
+                },
+                vertexShader: `
+                    varying vec2 vUv;
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform float time;
+                    uniform float innerRadius;
+                    uniform float outerRadius;
+                    varying vec2 vUv;
+                    
+                    void main() {
+                        vec2 center = vec2(0.5, 0.5);
+                        float dist = distance(vUv, center);
+                        float normalizedDist = (dist - innerRadius/(outerRadius*2.0)) / (1.0 - innerRadius/(outerRadius*2.0));
+                        
+                        // Create swirling pattern
+                        float angle = atan(vUv.y - 0.5, vUv.x - 0.5);
+                        float swirl = sin(angle * 10.0 + time * 2.0 + normalizedDist * 15.0) * 0.5 + 0.5;
+                        
+                        // Color gradient from red to blue
+                        vec3 color = mix(vec3(1.0, 0.2, 0.1), vec3(0.1, 0.2, 1.0), normalizedDist);
+                        
+                        // Add brightness variation
+                        float brightness = swirl * (1.0 - normalizedDist) * 2.0;
+                        
+                        gl_FragColor = vec4(color * brightness, 0.8);
+                    }
+                `,
+                transparent: true,
+                side: THREE.DoubleSide
             });
             const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
             accretionDisk.rotation.x = Math.PI / 2;
             scene.add(accretionDisk);
             
             // Create gravitational lensing effect (distortion sphere)
-            const lensGeometry = new THREE.SphereGeometry(8, 32, 32);
+            const lensGeometry = new THREE.SphereGeometry(12, 64, 64);
             const lensMaterial = new THREE.MeshBasicMaterial({
                 color: 0x000022,
-                wireframe: true,
+                wireframe: false,
                 transparent: true,
-                opacity: 0.1
+                opacity: 0.05
             });
             const lensingSphere = new THREE.Mesh(lensGeometry, lensMaterial);
             scene.add(lensingSphere);
+            
+            // Create background stars
+            const starsGeometry = new THREE.BufferGeometry();
+            const starsCount = 5000;
+            const positions = new Float32Array(starsCount * 3);
+            
+            for (let i = 0; i < starsCount * 3; i += 3) {
+                // Random position in a large sphere
+                const radius = 50 + Math.random() * 100;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                
+                positions[i] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i + 2] = radius * Math.cos(phi);
+            }
+            
+            starsGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const starsMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.1,
+                sizeAttenuation: true
+            });
+            const starField = new THREE.Points(starsGeometry, starsMaterial);
+            scene.add(starField);
             
             // Object storage
             let currentObject = null;
@@ -375,6 +461,7 @@
             let objectDistance = 50;
             let simulationSpeed = 50;
             let isSimulating = false;
+            let time = 0;
             
             // Object creation functions
             function createChair() {
@@ -455,16 +542,6 @@
                 const earth = new THREE.Mesh(earthGeometry, earthMaterial);
                 group.add(earth);
                 
-                // Add some continents (simplified)
-                const continentGeometry = new THREE.SphereGeometry(1.02, 32, 32);
-                const continentMaterial = new THREE.MeshPhongMaterial({ 
-                    color: 0x228B22,
-                    transparent: true,
-                    opacity: 0.7
-                });
-                const continents = new THREE.Mesh(continentGeometry, continentMaterial);
-                group.add(continents);
-                
                 return group;
             }
             
@@ -490,17 +567,6 @@
                 rightWing.position.set(1, 0, 0);
                 group.add(rightWing);
                 
-                // Engine glow
-                const engineGeometry = new THREE.SphereGeometry(0.3, 16, 16);
-                const engineMaterial = new THREE.MeshBasicMaterial({ 
-                    color: 0xff4500,
-                    transparent: true,
-                    opacity: 0.8
-                });
-                const engine = new THREE.Mesh(engineGeometry, engineMaterial);
-                engine.position.set(0, -1.2, 0);
-                group.add(engine);
-                
                 return group;
             }
             
@@ -525,13 +591,6 @@
                 rightPanel.position.set(1.5, 0, 0);
                 group.add(rightPanel);
                 
-                // Antenna
-                const antennaGeometry = new THREE.CylinderGeometry(0.02, 0.02, 1, 8);
-                const antennaMaterial = new THREE.MeshPhongMaterial({ color: 0xcccccc });
-                const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
-                antenna.position.set(0, 0.9, 0);
-                group.add(antenna);
-                
                 return group;
             }
             
@@ -551,32 +610,6 @@
                 const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
                 body.position.y = 0;
                 group.add(body);
-                
-                // Arms
-                const armGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.6, 8);
-                const armMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
-                
-                const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-                leftArm.position.set(-0.4, 0.3, 0);
-                leftArm.rotation.z = Math.PI / 6;
-                group.add(leftArm);
-                
-                const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-                rightArm.position.set(0.4, 0.3, 0);
-                rightArm.rotation.z = -Math.PI / 6;
-                group.add(rightArm);
-                
-                // Legs
-                const legGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.8, 8);
-                const legMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
-                
-                const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-                leftLeg.position.set(-0.2, -0.8, 0);
-                group.add(leftLeg);
-                
-                const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-                rightLeg.position.set(0.2, -0.8, 0);
-                group.add(rightLeg);
                 
                 return group;
             }
@@ -616,7 +649,7 @@
                 }
                 
                 // Position the object
-                const distance = 15 - (objectDistance / 100) * 14; // 1 to 15 units from black hole
+                const distance = 20 - (objectDistance / 100) * 18; // 2 to 20 units from black hole
                 currentObject.position.set(distance, 0, 0);
                 
                 // Add to scene
@@ -638,7 +671,7 @@
                 document.getElementById('distanceValue').textContent = objectDistance;
                 
                 if (currentObject) {
-                    const distance = 15 - (objectDistance / 100) * 14;
+                    const distance = 20 - (objectDistance / 100) * 18;
                     currentObject.position.x = distance;
                 }
             });
@@ -651,7 +684,7 @@
             // Reset button
             document.getElementById('resetButton').addEventListener('click', function() {
                 if (currentObject) {
-                    const distance = 15 - (objectDistance / 100) * 14;
+                    const distance = 20 - (objectDistance / 100) * 18;
                     currentObject.position.set(distance, 0, 0);
                     currentObject.scale.set(1, 1, 1);
                     currentObject.rotation.set(0, 0, 0);
@@ -670,16 +703,22 @@
             function animate() {
                 requestAnimationFrame(animate);
                 
+                time += 0.01;
+                
+                // Update shader uniforms
+                diskMaterial.uniforms.time.value = time;
+                photonSphereMaterial.uniforms.time.value = time;
+                
                 // Rotate accretion disk
-                accretionDisk.rotation.z += 0.01;
+                accretionDisk.rotation.z += 0.005;
                 
                 // Simulate spaghettification if an object is present
                 if (currentObject && isSimulating) {
                     const distanceToBlackHole = currentObject.position.length();
                     
                     // Calculate spaghettification effect based on distance and gravity
-                    const stretchFactor = (gravityStrength / 50) * (15 / distanceToBlackHole);
-                    const compressionFactor = 1 / stretchFactor;
+                    const stretchFactor = 1 + (gravityStrength / 10) * (10 / Math.max(distanceToBlackHole, 1.5));
+                    const compressionFactor = 1 / Math.sqrt(stretchFactor);
                     
                     // Apply stretching and compression
                     currentObject.scale.y = stretchFactor;
@@ -690,9 +729,14 @@
                     currentObject.rotation.z += 0.01 * (simulationSpeed / 50);
                     
                     // Move object toward black hole
-                    if (distanceToBlackHole > 1.5) {
+                    if (distanceToBlackHole > 2.5) {
                         const moveSpeed = 0.05 * (simulationSpeed / 50);
                         currentObject.position.x -= moveSpeed;
+                    } else {
+                        // When object gets too close, reset it
+                        const distance = 20 - (objectDistance / 100) * 18;
+                        currentObject.position.set(distance, 0, 0);
+                        currentObject.scale.set(1, 1, 1);
                     }
                 }
                 
